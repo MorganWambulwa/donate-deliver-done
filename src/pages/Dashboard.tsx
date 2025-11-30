@@ -5,11 +5,16 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
-import { HeartHandshake, LogOut, User as UserIcon } from "lucide-react";
+import { HeartHandshake, LogOut, User as UserIcon, Plus } from "lucide-react";
+import CreateDonationForm from "@/components/CreateDonationForm";
+import DonationsList from "@/components/DonationsList";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"browse" | "my-items">("browse");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -91,45 +96,63 @@ const Dashboard = () => {
               : "Browse available food donations and request what you need."}
           </p>
 
-          <div className="grid gap-6">
-            {userType === "donor" ? (
-              <>
-                <div className="bg-card border border-border rounded-lg p-6 shadow-card">
-                  <h2 className="text-2xl font-bold mb-4">Post a Donation</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Have surplus food? Share it with those who need it most.
-                  </p>
-                  <Button className="bg-gradient-hero">Create Donation</Button>
-                </div>
+          {userType === "donor" && (
+            <div className="flex justify-end mb-6">
+              <Button onClick={() => setShowCreateForm(true)} className="bg-gradient-hero">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Donation
+              </Button>
+            </div>
+          )}
 
-                <div className="bg-card border border-border rounded-lg p-6 shadow-card">
-                  <h2 className="text-2xl font-bold mb-4">My Donations</h2>
-                  <p className="text-muted-foreground">
-                    View and manage your active food donations.
-                  </p>
-                </div>
-              </>
+          <div className="flex gap-4 mb-6 border-b border-border">
+            <button
+              onClick={() => setActiveTab("browse")}
+              className={`pb-3 px-1 font-medium transition-colors ${
+                activeTab === "browse"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {userType === "donor" ? "All Donations" : "Browse Donations"}
+            </button>
+            <button
+              onClick={() => setActiveTab("my-items")}
+              className={`pb-3 px-1 font-medium transition-colors ${
+                activeTab === "my-items"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {userType === "donor" ? "My Donations" : "My Requests"}
+            </button>
+          </div>
+
+          <div>
+            {activeTab === "browse" ? (
+              <DonationsList userType={userType} filterByUser={false} />
+            ) : userType === "donor" ? (
+              <DonationsList userType={userType} filterByUser={true} />
             ) : (
-              <>
-                <div className="bg-card border border-border rounded-lg p-6 shadow-card">
-                  <h2 className="text-2xl font-bold mb-4">Browse Donations</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Find available food donations near you.
-                  </p>
-                  <Button className="bg-gradient-hero">View Donations</Button>
-                </div>
-
-                <div className="bg-card border border-border rounded-lg p-6 shadow-card">
-                  <h2 className="text-2xl font-bold mb-4">My Requests</h2>
-                  <p className="text-muted-foreground">
-                    Track your food donation requests and pickups.
-                  </p>
-                </div>
-              </>
+              <div className="text-center py-12 text-muted-foreground">
+                Request tracking coming soon...
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Donation</DialogTitle>
+            <DialogDescription>
+              Share your surplus food with those who need it most.
+            </DialogDescription>
+          </DialogHeader>
+          <CreateDonationForm />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
