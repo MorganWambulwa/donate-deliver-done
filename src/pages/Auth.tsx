@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,9 +8,95 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HeartHandshake } from "lucide-react";
 import { Link } from "react-router-dom";
+import { signUp, signIn } from "@/lib/auth";
+import { toast } from "sonner";
+import { z } from "zod";
+
+const signInSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const signUpSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 const Auth = () => {
   const [userType, setUserType] = useState<"donor" | "receiver">("donor");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("signin-email") as string;
+    const password = formData.get("signin-password") as string;
+
+    try {
+      signInSchema.parse({ email, password });
+      
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Welcome back!");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      fullName: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      password: formData.get("password") as string,
+      userType,
+    };
+
+    try {
+      signUpSchema.parse(data);
+
+      const { error } = await signUp(data);
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Account created successfully! Redirecting...");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex items-center justify-center p-4">
@@ -35,55 +122,98 @@ const Auth = () => {
               </TabsList>
               
               <TabsContent value="signin" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input id="signin-email" type="email" placeholder="your@email.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input id="signin-password" type="password" placeholder="••••••••" />
-                </div>
-                <Button className="w-full bg-gradient-hero">Sign In</Button>
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input 
+                      id="signin-email" 
+                      name="signin-email"
+                      type="email" 
+                      placeholder="your@email.com" 
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input 
+                      id="signin-password" 
+                      name="signin-password"
+                      type="password" 
+                      placeholder="••••••••" 
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-gradient-hero" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4">
-                <div className="space-y-4 mb-6">
-                  <Label>I want to:</Label>
-                  <RadioGroup value={userType} onValueChange={(value: "donor" | "receiver") => setUserType(value)}>
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg hover:border-primary transition-colors">
-                      <RadioGroupItem value="donor" id="donor" />
-                      <Label htmlFor="donor" className="flex-1 cursor-pointer">
-                        <div className="font-semibold">Donate Food</div>
-                        <div className="text-sm text-muted-foreground">I'm a restaurant or individual with surplus food</div>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg hover:border-primary transition-colors">
-                      <RadioGroupItem value="receiver" id="receiver" />
-                      <Label htmlFor="receiver" className="flex-1 cursor-pointer">
-                        <div className="font-semibold">Request Food</div>
-                        <div className="text-sm text-muted-foreground">I'm looking for food donations for my family/organization</div>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-4 mb-6">
+                    <Label>I want to:</Label>
+                    <RadioGroup value={userType} onValueChange={(value: "donor" | "receiver") => setUserType(value)}>
+                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:border-primary transition-colors">
+                        <RadioGroupItem value="donor" id="donor" />
+                        <Label htmlFor="donor" className="flex-1 cursor-pointer">
+                          <div className="font-semibold">Donate Food</div>
+                          <div className="text-sm text-muted-foreground">I'm a restaurant or individual with surplus food</div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:border-primary transition-colors">
+                        <RadioGroupItem value="receiver" id="receiver" />
+                        <Label htmlFor="receiver" className="flex-1 cursor-pointer">
+                          <div className="font-semibold">Request Food</div>
+                          <div className="text-sm text-muted-foreground">I'm looking for food donations for my family/organization</div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name / Organization</Label>
-                  <Input id="name" placeholder="John Doe" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your@email.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="+254 700 000 000" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" placeholder="••••••••" />
-                </div>
-                <Button className="w-full bg-gradient-hero">Create Account</Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name / Organization</Label>
+                    <Input 
+                      id="name" 
+                      name="name"
+                      placeholder="John Doe" 
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email" 
+                      name="email"
+                      type="email" 
+                      placeholder="your@email.com" 
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      name="phone"
+                      type="tel" 
+                      placeholder="+254 700 000 000" 
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input 
+                      id="password" 
+                      name="password"
+                      type="password" 
+                      placeholder="••••••••" 
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bg-gradient-hero" disabled={loading}>
+                    {loading ? "Creating account..." : "Create Account"}
+                  </Button>
+                </form>
               </TabsContent>
             </Tabs>
 
