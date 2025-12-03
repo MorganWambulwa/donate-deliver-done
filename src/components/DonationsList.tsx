@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DonationCard from "./DonationCard";
 import { toast } from "sonner";
@@ -12,6 +13,7 @@ interface DonationsListProps {
 const DonationsList = ({ userType, filterByUser = false }: DonationsListProps) => {
   const [donations, setDonations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDonations();
@@ -96,7 +98,7 @@ const DonationsList = ({ userType, filterByUser = false }: DonationsListProps) =
           donation={donation}
           userType={userType}
           onRequest={handleRequest}
-          onView={(id) => console.log("View donation:", id)}
+          onView={(id) => navigate(`/donation/${id}`)}
         />
       ))}
     </div>
