@@ -10,6 +10,7 @@ import CreateDonationForm from "@/components/CreateDonationForm";
 import DonationsList from "@/components/DonationsList";
 import RequestManagement from "@/components/RequestManagement";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -63,6 +64,9 @@ const Dashboard = () => {
   }
 
   const userType = user?.user_metadata?.user_type || "receiver";
+
+  // Enable real-time notifications
+  useRealtimeNotifications({ user, userType });
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
