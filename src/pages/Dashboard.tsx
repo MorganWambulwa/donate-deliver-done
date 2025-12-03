@@ -5,16 +5,17 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
-import { HeartHandshake, LogOut, User as UserIcon, Plus, Settings } from "lucide-react";
+import { HeartHandshake, LogOut, User as UserIcon, Plus, Settings, Inbox } from "lucide-react";
 import CreateDonationForm from "@/components/CreateDonationForm";
 import DonationsList from "@/components/DonationsList";
+import RequestManagement from "@/components/RequestManagement";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"browse" | "my-items">("browse");
+  const [activeTab, setActiveTab] = useState<"browse" | "my-items" | "requests">("browse");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -130,17 +131,34 @@ const Dashboard = () => {
             >
               {userType === "donor" ? "My Donations" : "My Requests"}
             </button>
+            {userType === "donor" && (
+              <button
+                onClick={() => setActiveTab("requests")}
+                className={`pb-3 px-1 font-medium transition-colors flex items-center gap-2 ${
+                  activeTab === "requests"
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Inbox className="h-4 w-4" />
+                Incoming Requests
+              </button>
+            )}
           </div>
 
           <div>
             {activeTab === "browse" ? (
               <DonationsList userType={userType} filterByUser={false} />
-            ) : userType === "donor" ? (
-              <DonationsList userType={userType} filterByUser={true} />
+            ) : activeTab === "my-items" ? (
+              userType === "donor" ? (
+                <DonationsList userType={userType} filterByUser={true} />
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  Request tracking coming soon...
+                </div>
+              )
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                Request tracking coming soon...
-              </div>
+              <RequestManagement />
             )}
           </div>
         </div>
