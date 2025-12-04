@@ -171,8 +171,11 @@ const Dashboard = () => {
               userType === "donor" ? (
                 <DonationsList userType={userType} filterByUser={true} />
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  Request tracking coming soon...
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">View and track all your donation requests</p>
+                  <Button onClick={() => navigate("/my-requests")} className="bg-gradient-hero">
+                    View My Requests
+                  </Button>
                 </div>
               )
             ) : (
