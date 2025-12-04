@@ -133,7 +133,7 @@ const RequestManagement = () => {
 
       if (requestError) throw requestError;
 
-      // If approved, update donation status to confirmed
+      // If approved, update donation status and create delivery
       if (newStatus === "approved") {
         const { error: donationError } = await supabase
           .from("food_donations")
@@ -141,6 +141,20 @@ const RequestManagement = () => {
           .eq("id", donationId);
 
         if (donationError) throw donationError;
+
+        // Create a delivery record
+        const { error: deliveryError } = await supabase
+          .from("deliveries")
+          .insert({
+            donation_id: donationId,
+            request_id: requestId,
+            status: "assigned",
+          });
+
+        if (deliveryError) {
+          console.error("Error creating delivery:", deliveryError);
+          // Don't throw - delivery creation is secondary
+        }
 
         // Reject other pending requests for the same donation
         await supabase

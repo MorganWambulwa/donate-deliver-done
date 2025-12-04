@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
-import { HeartHandshake, LogOut, User as UserIcon, Plus, Settings, Inbox, Map } from "lucide-react";
+import { HeartHandshake, LogOut, User as UserIcon, Plus, Settings, Inbox, Map, Truck } from "lucide-react";
 import CreateDonationForm from "@/components/CreateDonationForm";
 import DonationsList from "@/components/DonationsList";
 import RequestManagement from "@/components/RequestManagement";
@@ -83,6 +83,10 @@ const Dashboard = () => {
               <UserIcon className="h-5 w-5" />
               <span className="capitalize">{userType}</span>
             </div>
+            <Button variant="ghost" onClick={() => navigate("/deliveries")}>
+              <Truck className="h-4 w-4 mr-2" />
+              Deliveries
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/profile")}>
               <Settings className="h-4 w-4 mr-2" />
               Profile
