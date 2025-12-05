@@ -137,6 +137,39 @@ const DeliveryTracker = ({ userId, userType }: DeliveryTrackerProps) => {
     };
   }, [userId]);
 
+  const sendNotification = async (
+    delivery: Delivery,
+    newStatus: string
+  ) => {
+    try {
+      // Get receiver email
+      if (!delivery.request?.receiver_id) return;
+
+      const { data: receiverProfile } = await supabase
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", delivery.request.receiver_id)
+        .maybeSingle();
+
+      if (!receiverProfile?.email) return;
+
+      await supabase.functions.invoke("send-delivery-notification", {
+        body: {
+          deliveryId: delivery.id,
+          newStatus,
+          donationTitle: delivery.donation?.title || "Food Donation",
+          recipientEmail: receiverProfile.email,
+          recipientName: receiverProfile.full_name || "Valued User",
+        },
+      });
+
+      console.log("Notification sent successfully");
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      // Don't throw - notification failure shouldn't block status update
+    }
+  };
+
   const updateDeliveryStatus = async (
     deliveryId: string,
     newStatus: "in_transit" | "delivered" | "failed"
@@ -156,6 +189,12 @@ const DeliveryTracker = ({ userId, userType }: DeliveryTrackerProps) => {
         .eq("id", deliveryId);
 
       if (error) throw error;
+
+      // Find the delivery and send notification
+      const delivery = deliveries.find(d => d.id === deliveryId);
+      if (delivery) {
+        sendNotification(delivery, newStatus);
+      }
 
       toast.success(`Delivery marked as ${newStatus.replace("_", " ")}`);
       fetchDeliveries();
