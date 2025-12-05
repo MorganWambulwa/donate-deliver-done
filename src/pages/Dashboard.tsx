@@ -19,6 +19,11 @@ const Dashboard = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"browse" | "map" | "my-items" | "requests">("browse");
   const navigate = useNavigate();
+  
+  const userType = user?.user_metadata?.user_type || "receiver";
+  
+  // Enable real-time notifications - must be called before any conditional returns
+  useRealtimeNotifications({ user, userType });
 
   useEffect(() => {
     // Check if user is authenticated
@@ -63,11 +68,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
-  const userType = user?.user_metadata?.user_type || "receiver";
-
-  // Enable real-time notifications
-  useRealtimeNotifications({ user, userType });
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
