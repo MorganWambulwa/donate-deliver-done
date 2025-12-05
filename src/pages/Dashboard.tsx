@@ -83,10 +83,17 @@ const Dashboard = () => {
               <UserIcon className="h-5 w-5" />
               <span className="capitalize">{userType}</span>
             </div>
-            <Button variant="ghost" onClick={() => navigate("/deliveries")}>
-              <Truck className="h-4 w-4 mr-2" />
-              Deliveries
-            </Button>
+            {userType === "delivery" ? (
+              <Button variant="ghost" onClick={() => navigate("/delivery-dashboard")}>
+                <Truck className="h-4 w-4 mr-2" />
+                My Deliveries
+              </Button>
+            ) : (
+              <Button variant="ghost" onClick={() => navigate("/deliveries")}>
+                <Truck className="h-4 w-4 mr-2" />
+                Track Deliveries
+              </Button>
+            )}
             <Button variant="ghost" onClick={() => navigate("/profile")}>
               <Settings className="h-4 w-4 mr-2" />
               Profile
