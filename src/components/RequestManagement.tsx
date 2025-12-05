@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Check, X, Clock, Mail, Phone, User, MessageSquare } from "lucide-react";
+import { Check, X, Clock, Mail, Phone, User, MessageSquare, Truck } from "lucide-react";
 import { format } from "date-fns";
+import DeliveryPersonSelector from "./DeliveryPersonSelector";
 
 interface DonationRequest {
   id: string;
@@ -36,6 +37,7 @@ const RequestManagement = () => {
   const [requests, setRequests] = useState<DonationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedDeliveryPerson, setSelectedDeliveryPerson] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchRequests();
@@ -142,13 +144,18 @@ const RequestManagement = () => {
 
         if (donationError) throw donationError;
 
+        // Get selected delivery person (if any)
+        const deliveryPersonId = selectedDeliveryPerson[requestId];
+        const hasDeliveryPerson = deliveryPersonId && deliveryPersonId !== "none";
+
         // Create a delivery record
         const { error: deliveryError } = await supabase
           .from("deliveries")
           .insert({
             donation_id: donationId,
             request_id: requestId,
-            status: "assigned",
+            status: hasDeliveryPerson ? "assigned" : "assigned",
+            delivery_person_id: hasDeliveryPerson ? deliveryPersonId : null,
           });
 
         if (deliveryError) {
@@ -301,6 +308,21 @@ const RequestManagement = () => {
                       <p className="text-foreground">{request.message}</p>
                     </div>
                   )}
+
+                  {/* Delivery Person Selection */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                      <Truck className="h-4 w-4 text-primary" />
+                      <span>Assign Delivery Person</span>
+                    </div>
+                    <DeliveryPersonSelector
+                      value={selectedDeliveryPerson[request.id] || ""}
+                      onValueChange={(value) => 
+                        setSelectedDeliveryPerson(prev => ({ ...prev, [request.id]: value }))
+                      }
+                      disabled={processingId === request.id}
+                    />
+                  </div>
                 </CardContent>
                 <CardFooter className="gap-3">
                   <Button
