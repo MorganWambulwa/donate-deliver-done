@@ -1,10 +1,10 @@
 project_id = "raciqvtxwheracpvxavq"
 
 [functions.get-mapbox-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.geocode-address]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-delivery-notification]
-verify_jwt = false
+verify_jwt = true
