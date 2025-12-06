@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import DeliveryRouteOptimizer from "@/components/DeliveryRouteOptimizer";
 import { 
   Package, 
   Truck, 
@@ -18,7 +20,8 @@ import {
   MapPin,
   Phone,
   User,
-  ArrowLeft
+  ArrowLeft,
+  Route
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -368,18 +371,177 @@ const DeliveryDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-8">
-            {/* Active Deliveries */}
-            {activeDeliveries.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4">Active Deliveries</h2>
-                <div className="space-y-4">
-                  {activeDeliveries.map((delivery) => {
-                    const currentStep = getStatusIndex(delivery.status);
+          <Tabs defaultValue="deliveries" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="deliveries" className="flex items-center gap-2">
+                <Truck className="h-4 w-4" />
+                My Deliveries
+              </TabsTrigger>
+              <TabsTrigger value="route" className="flex items-center gap-2">
+                <Route className="h-4 w-4" />
+                Route Optimizer
+              </TabsTrigger>
+            </TabsList>
 
-                    return (
-                      <Card key={delivery.id} className="overflow-hidden border-primary/20">
-                        <CardHeader className="pb-3 bg-primary/5">
+            <TabsContent value="deliveries" className="space-y-8">
+              {/* Active Deliveries */}
+              {activeDeliveries.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-4">Active Deliveries</h2>
+                  <div className="space-y-4">
+                    {activeDeliveries.map((delivery) => {
+                      const currentStep = getStatusIndex(delivery.status);
+
+                      return (
+                        <Card key={delivery.id} className="overflow-hidden border-primary/20">
+                          <CardHeader className="pb-3 bg-primary/5">
+                            <div className="flex items-start justify-between">
+                              <CardTitle className="text-lg flex items-center gap-2">
+                                <Package className="h-5 w-5" />
+                                {delivery.donation?.title || "Donation"}
+                              </CardTitle>
+                              {getStatusBadge(delivery.status)}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4 pt-4">
+                            {/* Progress Timeline */}
+                            <div className="flex items-center justify-between relative">
+                              <div className="absolute top-4 left-0 right-0 h-1 bg-muted" />
+                              <div
+                                className="absolute top-4 left-0 h-1 bg-primary transition-all duration-500"
+                                style={{
+                                  width: `${(currentStep / (statusSteps.length - 1)) * 100}%`,
+                                }}
+                              />
+                              {statusSteps.map((step, index) => {
+                                const Icon = step.icon;
+                                const isCompleted = index <= currentStep;
+                                const isCurrent = index === currentStep;
+
+                                return (
+                                  <div key={step.key} className="flex flex-col items-center relative z-10">
+                                    <div
+                                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                                        isCompleted
+                                          ? "bg-primary text-primary-foreground"
+                                          : "bg-muted text-muted-foreground"
+                                      } ${isCurrent ? "ring-2 ring-primary ring-offset-2" : ""}`}
+                                    >
+                                      <Icon className="h-4 w-4" />
+                                    </div>
+                                    <span className={`text-xs mt-2 ${isCompleted ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                                      {step.label}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Contact Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-foreground">Pickup From (Donor)</h4>
+                                <div className="space-y-1 text-sm text-muted-foreground">
+                                  {delivery.donor_profile && (
+                                    <>
+                                      <div className="flex items-center gap-2">
+                                        <User className="h-4 w-4" />
+                                        <span>{delivery.donor_profile.full_name}</span>
+                                      </div>
+                                      {delivery.donor_profile.phone && (
+                                        <div className="flex items-center gap-2">
+                                          <Phone className="h-4 w-4" />
+                                          <a href={`tel:${delivery.donor_profile.phone}`} className="hover:underline">
+                                            {delivery.donor_profile.phone}
+                                          </a>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                  <div className="flex items-start gap-2">
+                                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                    <span>{delivery.donation?.pickup_location || "Not specified"}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-foreground">Deliver To (Receiver)</h4>
+                                {delivery.receiver_profile ? (
+                                  <div className="space-y-1 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2">
+                                      <User className="h-4 w-4" />
+                                      <span>{delivery.receiver_profile.full_name}</span>
+                                    </div>
+                                    {delivery.receiver_profile.phone && (
+                                      <div className="flex items-center gap-2">
+                                        <Phone className="h-4 w-4" />
+                                        <a href={`tel:${delivery.receiver_profile.phone}`} className="hover:underline">
+                                          {delivery.receiver_profile.phone}
+                                        </a>
+                                      </div>
+                                    )}
+                                    {delivery.receiver_profile.address && (
+                                      <div className="flex items-start gap-2">
+                                        <MapPin className="h-4 w-4 mt-0.5" />
+                                        <span>{delivery.receiver_profile.address}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground">
+                                    Receiver details not available
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-wrap gap-2 pt-4 border-t">
+                              {delivery.status === "assigned" && (
+                                <Button
+                                  onClick={() => updateDeliveryStatus(delivery.id, "in_transit")}
+                                  className="flex-1"
+                                >
+                                  <Truck className="h-4 w-4 mr-2" />
+                                  Start Delivery
+                                </Button>
+                              )}
+                              {delivery.status === "in_transit" && (
+                                <>
+                                  <Button
+                                    onClick={() => updateDeliveryStatus(delivery.id, "delivered")}
+                                    className="flex-1"
+                                  >
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Mark Delivered
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => updateDeliveryStatus(delivery.id, "failed")}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Failed
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed Deliveries */}
+              {completedDeliveries.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-foreground mb-4">Completed Deliveries</h2>
+                  <div className="space-y-4">
+                    {completedDeliveries.map((delivery) => (
+                      <Card key={delivery.id} className="overflow-hidden opacity-75">
+                        <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <CardTitle className="text-lg flex items-center gap-2">
                               <Package className="h-5 w-5" />
@@ -388,176 +550,39 @@ const DeliveryDashboard = () => {
                             {getStatusBadge(delivery.status)}
                           </div>
                         </CardHeader>
-                        <CardContent className="space-y-4 pt-4">
-                          {/* Progress Timeline */}
-                          <div className="flex items-center justify-between relative">
-                            <div className="absolute top-4 left-0 right-0 h-1 bg-muted" />
-                            <div
-                              className="absolute top-4 left-0 h-1 bg-primary transition-all duration-500"
-                              style={{
-                                width: `${(currentStep / (statusSteps.length - 1)) * 100}%`,
-                              }}
-                            />
-                            {statusSteps.map((step, index) => {
-                              const Icon = step.icon;
-                              const isCompleted = index <= currentStep;
-                              const isCurrent = index === currentStep;
-
-                              return (
-                                <div key={step.key} className="flex flex-col items-center relative z-10">
-                                  <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                                      isCompleted
-                                        ? "bg-primary text-primary-foreground"
-                                        : "bg-muted text-muted-foreground"
-                                    } ${isCurrent ? "ring-2 ring-primary ring-offset-2" : ""}`}
-                                  >
-                                    <Icon className="h-4 w-4" />
-                                  </div>
-                                  <span className={`text-xs mt-2 ${isCompleted ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                                    {step.label}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Contact Details */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-medium text-foreground">Pickup From (Donor)</h4>
-                              <div className="space-y-1 text-sm text-muted-foreground">
-                                {delivery.donor_profile && (
-                                  <>
-                                    <div className="flex items-center gap-2">
-                                      <User className="h-4 w-4" />
-                                      <span>{delivery.donor_profile.full_name}</span>
-                                    </div>
-                                    {delivery.donor_profile.phone && (
-                                      <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4" />
-                                        <a href={`tel:${delivery.donor_profile.phone}`} className="hover:underline">
-                                          {delivery.donor_profile.phone}
-                                        </a>
-                                      </div>
-                                    )}
-                                  </>
-                                )}
-                                <div className="flex items-start gap-2">
-                                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                  <span>{delivery.donation?.pickup_location || "Not specified"}</span>
-                                </div>
-                              </div>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Pickup:</span>
+                              <p className="text-foreground">{delivery.donation?.pickup_location || "N/A"}</p>
+                              {delivery.pickup_time && (
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(delivery.pickup_time), "MMM d, yyyy 'at' h:mm a")}
+                                </p>
+                              )}
                             </div>
-
-                            <div className="space-y-2">
-                              <h4 className="text-sm font-medium text-foreground">Deliver To (Receiver)</h4>
-                              {delivery.receiver_profile ? (
-                                <div className="space-y-1 text-sm text-muted-foreground">
-                                  <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4" />
-                                    <span>{delivery.receiver_profile.full_name}</span>
-                                  </div>
-                                  {delivery.receiver_profile.phone && (
-                                    <div className="flex items-center gap-2">
-                                      <Phone className="h-4 w-4" />
-                                      <a href={`tel:${delivery.receiver_profile.phone}`} className="hover:underline">
-                                        {delivery.receiver_profile.phone}
-                                      </a>
-                                    </div>
-                                  )}
-                                  {delivery.receiver_profile.address && (
-                                    <div className="flex items-start gap-2">
-                                      <MapPin className="h-4 w-4 mt-0.5" />
-                                      <span>{delivery.receiver_profile.address}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">No receiver information</p>
+                            <div>
+                              <span className="text-muted-foreground">Delivery:</span>
+                              <p className="text-foreground">{delivery.receiver_profile?.address || "N/A"}</p>
+                              {delivery.delivery_time && (
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(delivery.delivery_time), "MMM d, yyyy 'at' h:mm a")}
+                                </p>
                               )}
                             </div>
                           </div>
-
-                          {/* Timestamps */}
-                          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2">
-                            <span>Assigned: {format(new Date(delivery.created_at), "PPp")}</span>
-                            {delivery.pickup_time && (
-                              <span>Picked up: {format(new Date(delivery.pickup_time), "PPp")}</span>
-                            )}
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2 pt-2">
-                            {delivery.status === "assigned" && (
-                              <Button
-                                onClick={() => updateDeliveryStatus(delivery.id, "in_transit")}
-                                className="w-full sm:w-auto"
-                              >
-                                <Truck className="h-4 w-4 mr-2" />
-                                Start Delivery
-                              </Button>
-                            )}
-                            {delivery.status === "in_transit" && (
-                              <>
-                                <Button
-                                  onClick={() => updateDeliveryStatus(delivery.id, "delivered")}
-                                  className="bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                                  Mark Delivered
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  onClick={() => updateDeliveryStatus(delivery.id, "failed")}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Mark Failed
-                                </Button>
-                              </>
-                            )}
-                          </div>
                         </CardContent>
                       </Card>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </TabsContent>
 
-            {/* Completed Deliveries */}
-            {completedDeliveries.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4">Completed Deliveries</h2>
-                <div className="space-y-4">
-                  {completedDeliveries.map((delivery) => (
-                    <Card key={delivery.id} className="overflow-hidden opacity-75">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Package className="h-5 w-5" />
-                            {delivery.donation?.title || "Donation"}
-                          </CardTitle>
-                          {getStatusBadge(delivery.status)}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <span>{delivery.donation?.pickup_location || "Not specified"}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2">
-                          {delivery.delivery_time && (
-                            <span>Completed: {format(new Date(delivery.delivery_time), "PPp")}</span>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            <TabsContent value="route">
+              <DeliveryRouteOptimizer deliveries={activeDeliveries} />
+            </TabsContent>
+          </Tabs>
         )}
       </main>
       <Footer />
