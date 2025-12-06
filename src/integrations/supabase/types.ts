@@ -241,7 +241,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_view_profile: { Args: { profile_id: string }; Returns: boolean }
+      create_delivery: {
+        Args: {
+          p_delivery_person_id?: string
+          p_donation_id: string
+          p_request_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       delivery_status: "assigned" | "in_transit" | "delivered" | "failed"

@@ -148,14 +148,12 @@ const RequestManagement = () => {
         const deliveryPersonId = selectedDeliveryPerson[requestId];
         const hasDeliveryPerson = deliveryPersonId && deliveryPersonId !== "none";
 
-        // Create a delivery record
+        // Create a delivery record using secure RPC function
         const { error: deliveryError } = await supabase
-          .from("deliveries")
-          .insert({
-            donation_id: donationId,
-            request_id: requestId,
-            status: hasDeliveryPerson ? "assigned" : "assigned",
-            delivery_person_id: hasDeliveryPerson ? deliveryPersonId : null,
+          .rpc("create_delivery", {
+            p_donation_id: donationId,
+            p_request_id: requestId,
+            p_delivery_person_id: hasDeliveryPerson ? deliveryPersonId : null,
           });
 
         if (deliveryError) {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -7,6 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Input validation schema
 interface NotificationRequest {
   deliveryId: string;
   newStatus: string;
@@ -14,6 +16,78 @@ interface NotificationRequest {
   recipientEmail: string;
   recipientName: string;
 }
+
+// Validate UUID format
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+// Validate email format
+const isValidEmail = (str: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(str) && str.length <= 255;
+};
+
+// Sanitize HTML to prevent injection
+const sanitizeHtml = (str: string): string => {
+  return str.replace(/[<>&"']/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '&': '&amp;',
+      '"': '&quot;',
+      "'": '&#x27;',
+    };
+    return entities[char] || char;
+  });
+};
+
+// Validate and parse request
+const validateRequest = (data: unknown): { valid: true; data: NotificationRequest } | { valid: false; error: string } => {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid request body' };
+  }
+
+  const req = data as Record<string, unknown>;
+
+  // Validate deliveryId
+  if (typeof req.deliveryId !== 'string' || !isValidUUID(req.deliveryId)) {
+    return { valid: false, error: 'Invalid deliveryId: must be a valid UUID' };
+  }
+
+  // Validate newStatus
+  const validStatuses = ['assigned', 'in_transit', 'delivered', 'failed'];
+  if (typeof req.newStatus !== 'string' || !validStatuses.includes(req.newStatus)) {
+    return { valid: false, error: 'Invalid newStatus: must be one of assigned, in_transit, delivered, failed' };
+  }
+
+  // Validate donationTitle
+  if (typeof req.donationTitle !== 'string' || req.donationTitle.length === 0 || req.donationTitle.length > 200) {
+    return { valid: false, error: 'Invalid donationTitle: must be 1-200 characters' };
+  }
+
+  // Validate recipientEmail
+  if (typeof req.recipientEmail !== 'string' || !isValidEmail(req.recipientEmail)) {
+    return { valid: false, error: 'Invalid recipientEmail: must be a valid email address' };
+  }
+
+  // Validate recipientName
+  if (typeof req.recipientName !== 'string' || req.recipientName.length === 0 || req.recipientName.length > 100) {
+    return { valid: false, error: 'Invalid recipientName: must be 1-100 characters' };
+  }
+
+  return {
+    valid: true,
+    data: {
+      deliveryId: req.deliveryId,
+      newStatus: req.newStatus,
+      donationTitle: sanitizeHtml(req.donationTitle),
+      recipientEmail: req.recipientEmail,
+      recipientName: sanitizeHtml(req.recipientName),
+    },
+  };
+};
 
 const getStatusMessage = (status: string): { subject: string; message: string } => {
   switch (status) {
@@ -62,7 +136,47 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { deliveryId, newStatus, donationTitle, recipientEmail, recipientName }: NotificationRequest = await req.json();
+    // Parse and validate input
+    const rawData = await req.json();
+    const validation = validateRequest(rawData);
+    
+    if (!validation.valid) {
+      console.error("Input validation failed:", validation.error);
+      return new Response(
+        JSON.stringify({ error: validation.error }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { deliveryId, newStatus, donationTitle, recipientEmail, recipientName } = validation.data;
+
+    // Verify the delivery exists and caller is authorized
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL');
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+      
+      if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } }
+        });
+        
+        // Check if delivery exists and user is involved
+        const { data: delivery, error: deliveryError } = await supabase
+          .from('deliveries')
+          .select('id')
+          .eq('id', deliveryId)
+          .single();
+        
+        if (deliveryError || !delivery) {
+          console.error("Delivery not found or unauthorized:", deliveryError);
+          return new Response(
+            JSON.stringify({ error: "Delivery not found or unauthorized" }),
+            { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
+    }
 
     console.log(`Processing notification for delivery ${deliveryId}, status: ${newStatus}`);
     console.log(`Sending to: ${recipientEmail}`);
