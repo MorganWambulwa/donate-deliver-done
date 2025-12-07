@@ -1,9 +1,25 @@
 import { HeartHandshake, Mail, MapPin, Phone } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Footer = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const scrollToSection = (sectionId: string) => {
+    if (location.pathname !== "/") {
+      navigate("/");
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        element?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      element?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <footer className="bg-muted/30 border-t border-border pt-16 pb-8">
+    <footer id="about" className="bg-muted/30 border-t border-border pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           <div>
@@ -19,8 +35,22 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4 text-foreground">Quick Links</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><Link to="/#how-it-works" className="hover:text-primary transition-colors">How It Works</Link></li>
-              <li><Link to="/#impact" className="hover:text-primary transition-colors">Our Impact</Link></li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("how-it-works")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  How It Works
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("impact")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  Our Impact
+                </button>
+              </li>
               <li><Link to="/auth" className="hover:text-primary transition-colors">Donate Food</Link></li>
               <li><Link to="/auth" className="hover:text-primary transition-colors">Request Food</Link></li>
             </ul>
@@ -29,10 +59,38 @@ const Footer = () => {
           <div>
             <h3 className="font-bold text-lg mb-4 text-foreground">About</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><Link to="/#about" className="hover:text-primary transition-colors">Our Mission</Link></li>
-              <li><Link to="/#about" className="hover:text-primary transition-colors">Team</Link></li>
-              <li><Link to="/#about" className="hover:text-primary transition-colors">Partners</Link></li>
-              <li><Link to="/#about" className="hover:text-primary transition-colors">Contact</Link></li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("about")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  Our Mission
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("about")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  Team
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("about")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  Partners
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => scrollToSection("about")} 
+                  className="hover:text-primary transition-colors bg-transparent border-none cursor-pointer p-0"
+                >
+                  Contact
+                </button>
+              </li>
             </ul>
           </div>
           
