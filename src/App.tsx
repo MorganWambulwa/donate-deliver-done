@@ -33,7 +33,7 @@ const App = () => (
             <Route path="/donation/:id" element={<DonationDetails />} />
             <Route path="/my-requests" element={<MyRequests />} />
             <Route path="/deliveries" element={<Deliveries />} />
-            <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
