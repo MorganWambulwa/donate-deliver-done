@@ -67,7 +67,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -104,7 +104,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Account created successfully! Redirecting...");
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -170,7 +170,7 @@ const Auth = () => {
       } else {
         toast.success("Password updated successfully!");
         setIsUpdatingPassword(false);
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to update password");
