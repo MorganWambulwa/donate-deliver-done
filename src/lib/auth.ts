@@ -8,14 +8,15 @@ export interface SignUpData {
   userType: "donor" | "receiver";
 }
 
-export const signUp = async (data: SignUpData) => {
-  const redirectUrl = `${window.location.origin}/`;
+export const signUp = async (data: SignUpData, next?: string) => {
+  const redirectUrl = `${window.location.origin}${next ?? "/"}`;
   
   const { data: authData, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
     options: {
       emailRedirectTo: redirectUrl,
+
       data: {
         full_name: data.fullName,
         phone: data.phone,

@@ -32,6 +32,11 @@ const Auth = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const navigate = useNavigate();
 
+  // Where to send the user after auth (used by the OAuth consent flow).
+  const rawNext = new URLSearchParams(window.location.search).get("next");
+  const nextPath = rawNext && /^\/(?!\/)/.test(rawNext) ? rawNext : "/dashboard";
+
+
   useEffect(() => {
     // Check if this is a password recovery callback
     supabase.auth.onAuthStateChange((event) => {
@@ -62,7 +67,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -89,7 +94,7 @@ const Auth = () => {
     try {
       signUpSchema.parse(data);
 
-      const { error } = await signUp(data);
+      const { error } = await signUp(data, nextPath);
 
       if (error) {
         if (error.message.includes("already registered")) {
@@ -99,7 +104,7 @@ const Auth = () => {
         }
       } else {
         toast.success("Account created successfully! Redirecting...");
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -165,7 +170,7 @@ const Auth = () => {
       } else {
         toast.success("Password updated successfully!");
         setIsUpdatingPassword(false);
-        navigate("/dashboard");
+        navigate(nextPath);
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to update password");

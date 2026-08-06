@@ -12,7 +12,9 @@ import DonationDetails from "./pages/DonationDetails";
 import MyRequests from "./pages/MyRequests";
 import Deliveries from "./pages/Deliveries";
 import DeliveryDashboard from "./pages/DeliveryDashboard";
+import OAuthConsent from "./pages/OAuthConsent";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
             <Route path="/my-requests" element={<MyRequests />} />
             <Route path="/deliveries" element={<Deliveries />} />
             <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
