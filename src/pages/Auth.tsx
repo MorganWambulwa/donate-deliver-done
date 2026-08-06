@@ -89,7 +89,7 @@ const Auth = () => {
     try {
       signUpSchema.parse(data);
 
-      const { error } = await signUp(data);
+      const { error } = await signUp(data, nextPath);
 
       if (error) {
         if (error.message.includes("already registered")) {
