@@ -32,6 +32,11 @@ const Auth = () => {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const navigate = useNavigate();
 
+  // Where to send the user after auth (used by the OAuth consent flow).
+  const rawNext = new URLSearchParams(window.location.search).get("next");
+  const nextPath = rawNext && /^\/(?!\/)/.test(rawNext) ? rawNext : "/dashboard";
+
+
   useEffect(() => {
     // Check if this is a password recovery callback
     supabase.auth.onAuthStateChange((event) => {
