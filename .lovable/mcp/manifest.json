@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://raciqvtxwheracpvxavq.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "foodshare-connect",
+      "version": "0.1.0",
+      "title": "FoodShare Connect"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Get the signed-in user's FoodShare profile, including their role (donor, receiver or delivery).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_available_donations",
+        "title": "List available donations",
+        "description": "List food donations that are currently available to request.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Max donations to return (default 20)."
+            },
+            "search": {
+              "type": "string",
+              "description": "Optional text to match against title, food type or pickup location."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_my_activity",
+        "title": "List my donations and requests",
+        "description": "List the signed-in user's own food donations and donation requests, with their current status.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Max rows per section (default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_donation",
+        "title": "Create donation",
+        "description": "Create a new food donation listing owned by the signed-in donor.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Short title of the donation."
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "description": "What the food is and its condition."
+            },
+            "food_type": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Category, e.g. cooked meals, produce, bakery."
+            },
+            "quantity": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Quantity description, e.g. '5 kg' or '20 meals'."
+            },
+            "pickup_location": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Address or area for pickup."
+            },
+            "expiry_date": {
+              "type": "string",
+              "description": "Expiry / best-before date as an ISO date or timestamp."
+            },
+            "serves_people": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "Approximate number of people served."
+            },
+            "allergens": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Allergens present in the food."
+            },
+            "dietary_info": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Dietary tags, e.g. vegetarian, halal."
+            }
+          },
+          "required": [
+            "title",
+            "description",
+            "food_type",
+            "quantity",
+            "pickup_location",
+            "expiry_date"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "request_donation",
+        "title": "Request a donation",
+        "description": "Request an available food donation on behalf of the signed-in receiver.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "donation_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the donation to request."
+            },
+            "message": {
+              "type": "string",
+              "description": "Optional message to the donor."
+            }
+          },
+          "required": [
+            "donation_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "respond_to_request",
+        "title": "Respond to a donation request",
+        "description": "Accept or reject a request made on one of the signed-in donor's donations.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the donation request."
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "accepted",
+                "rejected"
+              ],
+              "description": "Whether to accept or reject the request."
+            }
+          },
+          "required": [
+            "request_id",
+            "decision"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
